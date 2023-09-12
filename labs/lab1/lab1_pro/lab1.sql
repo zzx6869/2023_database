@@ -267,43 +267,31 @@ from reader
 where ID = 'r100';
 call updateReaderID('r100', 'r4', @state);
 
-
+select *
+from borrow;
 call borrowBook('b11', 'r10', '2022-10-12', '2022-11-19', @state);# 同一天统一读者重复借阅同一本书
 select @state;
 
 insert into reserve value ('b1', 'r2', '2022-04-12', '2022-07-19');
-call borrowBook('b1', 'r8', '2022-04-02', '2022-07-19', @state);# 图书被预约，当前读者没预约
 select *
 from reserve;
+call borrowBook('b1', 'r8', '2022-04-02', '2022-07-19', @state);# 图书被预约，当前读者没预约
 select @state;
 delete
 from reserve
 where reader_ID = 'r2';
 
-delete
-from reserve
-where book_ID = 'b11';
 insert into reserve
 values ('b11', 'r23', '2023-04-22', null);
-delete
-from borrow
-where reader_ID = 'r23'
-  and book_ID = 'b16';
-insert into borrow
-values ('b16', 'r23', '2023-01-14', null);
 call borrowBook('b11', 'r23', '2022-04-12', '2022-07-19', @state);
 select *
 from borrow;
 select @state;#一个读者最多预约3本，且未归还
-
-delete
-from borrow
-where reader_ID = 'r10'
-  and book_ID = 'b3';
 delete
 from reserve
-where reader_ID = 'r10'
-  and book_ID = 'b3';
+where book_ID = 'b11';
+
+
 insert into reserve value ('b3', 'r10', '2022-02-19', '2022-04-02');#读者已预约,可借阅
 call borrowBook('b3', 'r10', '2022-04-02', '2022-07-19', @state);
 select @state;
@@ -311,28 +299,31 @@ select *
 from borrow
 where reader_ID = 'r10'
   and book_ID = 'b3';
+delete
+from borrow
+where reader_ID = 'r10'
+  and book_ID = 'b3';
+delete
+from reserve
+where reader_ID = 'r10'
+  and book_ID = 'b3';
 
 # 5.
+select * from borrow
+where book_ID='b16'
+and reader_ID='r23';
 call returnBOOK('r23', 'b16', '2023-01-14', '2023-02-07', @state);
-select *
-from borrow
-where reader_ID = 'r23'
-  and book_ID = 'b16';
 select @state;
 update borrow
 set return_Date = null
 where reader_ID = 'r23'
   and book_ID = 'b16';
-update borrow
-set return_Date = null
-where reader_ID = 'r10'
-  and book_ID = 'b2';
 
-call returnBOOK('r10', 'b2', '2023-01-01', '2023-02-01', @state);
 select *
 from borrow
 where reader_ID = 'r10'
   and book_ID = 'b2';
+call returnBOOK('r10', 'b2', '2023-01-01', '2023-02-01', @state);
 select @state;
 # # 六
 # delimiter
@@ -380,7 +371,7 @@ begin
     delete from reserve where reserve.book_ID = new.book_ID and reserve.reader_ID = new.reader_ID;
 end;
 
-
+# 取消预约的
 drop trigger if exists after_reserve;
 create trigger after_reserve
     after delete
@@ -419,8 +410,5 @@ delete
 from reserve
 where book_ID = 'b10';
 #书被借出
-delete
-from borrow
-where book_ID = 'b11'
-  and reader_ID = 'r20';
+
 insert into borrow value ('b11', 'r20', '2023-04-23', '2023-05-25');
